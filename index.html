@@ -225,7 +225,7 @@
 
     <section class="card">
       <div class="card-head">
-        <h2>Detalle</h2>
+        <h2>DESTINO: POLO LOGÍSTICO - MSC</h2>
         <span class="small" id="info">Cargando remitos por descargar...</span>
       </div>
 
@@ -237,7 +237,7 @@
               <th>Remito Creado</th>
               <th>Matrícula</th>
               <th>Origen</th>
-              <th>Destino</th>
+              <th>Producto</th>
               <th>Cantidad</th>
               <th>GPS Ubicación</th>
               <th>GPS Velocidad</th>
@@ -432,7 +432,7 @@
         const remito = getField(row, ['REMITO','Remito','remito']);
         const registro = getField(row, ['REGISTRO','Registro','registro']);
         const origen = getField(row, ['ORIGEN','Origen','origen']);
-        const destino = getField(row, ['DESTINO','Destino','destino']);
+        const producto = getField(row, ['PRODUCTO','Producto','producto']);
         const matricula = getField(row, ['MATRICULA','Matrícula','MATRÍCULA','Matricula','matricula']);
         const cantidad = getField(row, ['CANTIDAD','Cantidad','cantidad']);
         const gpsUbicacion = getField(row, ['GPS.UBICACION','GPS Ubicacion','GPS Ubicación','gps.ubicacion']);
@@ -449,7 +449,7 @@
           <td>${escapeHtml(formatDate(registro))}</td>
           <td>${escapeHtml(matricula || '—')}</td>
           <td>${escapeHtml(origen || '—')}</td>
-          <td>${escapeHtml(destino || '—')}</td>
+          <td>${escapeHtml(producto || '—')}</td>
           <td>${escapeHtml(formatNum(cantidad))}</td>
           <td>${escapeHtml(gpsUbicacion || '—')}</td>
           <td>${escapeHtml(gpsVelocidad !== '' ? formatNum(gpsVelocidad) + ' km/h' : '—')}</td>
@@ -502,3 +502,5 @@
   </script>
 </body>
 </html>
+index_polo_producto_actualizado.html
+HTML
