@@ -127,6 +127,29 @@
       font-size:16px;
       margin:0;
     }
+    .product-counters{
+      display:flex;
+      justify-content:center;
+      gap:12px;
+      flex-wrap:wrap;
+      margin-top:10px;
+    }
+    .product-counter{
+      min-width:220px;
+      padding:9px 12px;
+      border:1px solid var(--line);
+      border-radius:10px;
+      background:rgba(7,19,30,.55);
+      font-size:12px;
+      font-weight:700;
+      color:var(--text);
+    }
+    .product-counter strong{
+      display:inline-block;
+      margin-left:6px;
+      font-size:18px;
+      color:var(--warn);
+    }
     .small{
       display:block;
       margin-top:4px;
@@ -226,6 +249,16 @@
     <section class="card">
       <div class="card-head">
         <h2>DESTINO: POLO LOGÍSTICO - MSC</h2>
+        <div class="product-counters">
+          <div class="product-counter">
+            ROJO 5.80 +30
+            <strong id="contadorRojo">0</strong>
+          </div>
+          <div class="product-counter">
+            AMARILLO 5.80 +30 PPL
+            <strong id="contadorAmarillo">0</strong>
+          </div>
+        </div>
         <span class="small" id="info">Cargando remitos por descargar...</span>
       </div>
 
@@ -426,6 +459,20 @@
       const empty = $('empty');
 
       $('contadorPorDescargar').textContent = new Intl.NumberFormat('es-UY').format(pending.length);
+
+      const normalizarProducto = value =>
+        clean(value).toLocaleUpperCase('es-UY');
+
+      const totalRojo = pending.filter(row =>
+        normalizarProducto(getField(row, ['PRODUCTO','Producto','producto'])) === 'ROJO 5.80 +30'
+      ).length;
+
+      const totalAmarillo = pending.filter(row =>
+        normalizarProducto(getField(row, ['PRODUCTO','Producto','producto'])) === 'AMARILLO 5.80 +30 PPL'
+      ).length;
+
+      $('contadorRojo').textContent = new Intl.NumberFormat('es-UY').format(totalRojo);
+      $('contadorAmarillo').textContent = new Intl.NumberFormat('es-UY').format(totalAmarillo);
       $('info').textContent = 'Listado actualizado';
 
       body.innerHTML = pending.map(row => {
@@ -484,6 +531,8 @@
       } catch (error) {
         console.error(error);
         $('contadorPorDescargar').textContent = '—';
+        $('contadorRojo').textContent = '0';
+        $('contadorAmarillo').textContent = '0';
         $('info').textContent = 'No fue posible cargar los datos desde Dropbox.';
         $('tableBody').innerHTML = '';
         $('empty').hidden = false;
@@ -502,5 +551,3 @@
   </script>
 </body>
 </html>
-index_polo_producto_actualizado.html
-HTML
