@@ -470,15 +470,19 @@
 
       $('contadorPorDescargar').textContent = new Intl.NumberFormat('es-UY').format(pending.length);
 
+      // Normaliza el producto quitando todos los espacios para que valores como
+      // "ROJO 5.80+30" y "ROJO 5.80 +30" se contabilicen igual.
       const normalizarProducto = value =>
-        clean(value).toLocaleUpperCase('es-UY');
+        clean(value)
+          .toLocaleUpperCase('es-UY')
+          .replace(/\s+/g, '');
 
       const totalRojo = pending.filter(row =>
-        normalizarProducto(getField(row, ['PRODUCTO','Producto','producto'])) === 'ROJO 5.80 +30'
+        normalizarProducto(getField(row, ['PRODUCTO','Producto','producto'])) === 'ROJO5.80+30'
       ).length;
 
       const totalAmarillo = pending.filter(row =>
-        normalizarProducto(getField(row, ['PRODUCTO','Producto','producto'])) === 'AMARILLO 5.80 +30 PPL'
+        normalizarProducto(getField(row, ['PRODUCTO','Producto','producto'])) === 'AMARILLO5.80+30PPL'
       ).length;
 
       $('contadorRojo').textContent = new Intl.NumberFormat('es-UY').format(totalRojo);
