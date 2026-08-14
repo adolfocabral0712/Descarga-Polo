@@ -381,7 +381,7 @@
         hour:'2-digit',
         minute:'2-digit',
         second:'2-digit',
-        hour12:true
+        hourCycle:'h23'
       }).format(date).replace(',', '');
     }
 
@@ -430,6 +430,11 @@
       return salida;
     }
 
+    function isDestinoPolo(row) {
+      const destino = clean(getField(row, ['DESTINO','Destino','destino'])).toLocaleUpperCase('es-UY');
+      return destino.includes('POLO');
+    }
+
     function isPending(row) {
       const estado = clean(getField(row, ['ESTADO DESCARGA','estado_descarga','ESTADO','Estado','estado'])).toLocaleUpperCase('es-UY');
       return estado !== 'DESCARGÓ' && estado !== 'DESCARGO' && estado !== 'DESCARGADO';
@@ -456,7 +461,11 @@
     }
 
     function render(rows) {
-      const pending = sortPending(quitarDuplicados(rows.filter(isPending)));
+      const pending = sortPending(
+        quitarDuplicados(
+          rows.filter(row => isDestinoPolo(row) && isPending(row))
+        )
+      );
       const body = $('tableBody');
       const empty = $('empty');
 
