@@ -164,7 +164,7 @@
     }
     table{
       width:100%;
-      min-width:1320px;
+      min-width:1200px;
       border-collapse:collapse;
       font-size:13px;
     }
@@ -272,7 +272,6 @@
               <th>Predio</th>
               <th>Producto</th>
               <th>Cantidad</th>
-              <th>Neto</th>
               <th>Ubicación / Velocidad</th>
               <th>Mapa</th>
               <th>Reporte GPS</th>
@@ -493,7 +492,6 @@
         const producto = getField(row, ['PRODUCTO','Producto','producto']);
         const vehiculo = getField(row, ['VEHÍCULO','VEHICULO','vehiculo']);
         const cantidad = getField(row, ['CANTIDAD','Cantidad','cantidad']);
-        const neto = getField(row, ['NETO','Neto','neto','neto_ton']);
         const ubicacionVelocidad = getField(row, ['UBICACION - VELOCIDAD','UBICACIÓN - VELOCIDAD','ubicacion - velocidad']);
         const gpsLink = getField(row, ['POSICION','POSICIÓN','posicion']);
         const reporteGps = getField(row, ['REPORTE GPS HACE','REPORTE GPS','Reporte GPS','reporte gps']);
@@ -510,7 +508,6 @@
           <td>${escapeHtml(predio || '—')}</td>
           <td>${escapeHtml(producto || '—')}</td>
           <td>${escapeHtml(formatNum(cantidad))}</td>
-          <td>${escapeHtml(formatNum(neto))}</td>
           <td>${escapeHtml(ubicacionVelocidad || '—')}</td>
           <td>${mapa}</td>
           <td>${escapeHtml(reporteGps || '—')}</td>
