@@ -266,17 +266,17 @@
         <table>
           <thead>
             <tr>
-              <th>Remito</th>
-              <th>Remito Creado</th>
-              <th>Matrícula</th>
-              <th>Origen</th>
+              <th>Remito Monte</th>
+              <th>Fin Carga</th>
+              <th>Vehículo</th>
+              <th>Predio</th>
               <th>Producto</th>
               <th>Cantidad</th>
-              <th>GPS Ubicación</th>
-              <th>GPS Velocidad</th>
+              <th>Neto</th>
+              <th>Ubicación / Velocidad</th>
               <th>Mapa</th>
               <th>Reporte GPS</th>
-              <th>Estado</th>
+              <th>Estado Descarga</th>
             </tr>
           </thead>
           <tbody id="tableBody"></tbody>
@@ -348,11 +348,13 @@
 
 
     function parseUltimaActualizacion(payload) {
-      const raw = clean(payload?.ultima_actualizacion || '');
+      const raw = clean(payload?.actualizado || payload?.ultima_actualizacion || '');
       if (!raw) return null;
 
-      const text = raw.replace(/^Actualizado:\s*/i, '').trim();
+      const isoDate = new Date(raw);
+      if (!Number.isNaN(isoDate.getTime())) return isoDate;
 
+      const text = raw.replace(/^Actualizado:\s*/i, '').trim();
       const match = text.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})\s+(\d{1,2}):(\d{2})(?::(\d{2}))?$/);
       if (!match) return null;
 
@@ -402,7 +404,7 @@
     }
 
     function extractRows(payload) {
-      const rows = Array.isArray(payload) ? payload : payload?.datos;
+      const rows = Array.isArray(payload) ? payload : payload?.registros;
       if (!Array.isArray(rows)) throw new Error('No se encontraron registros.');
       return rows;
     }
@@ -413,11 +415,11 @@
       const salida = [];
 
       for (const row of rows) {
-        const remito = clean(getField(row, ['REMITO','Remito','remito']));
-        const matricula = clean(getField(row, ['MATRICULA','Matrícula','MATRÍCULA','Matricula','matricula']));
-        const registro = clean(getField(row, ['REGISTRO','Registro','registro']));
+        const remito = clean(getField(row, ['REMITO MONTE','REMITO','Remito','remito']));
+        const vehiculo = clean(getField(row, ['VEHÍCULO','VEHICULO','vehiculo']));
+        const finCarga = clean(getField(row, ['FIN CARGA','fin_carga']));
 
-        const clave = `${remito}|${matricula}|${registro}`;
+        const clave = `${remito}|${vehiculo}|${finCarga}`;
 
         if (!vistos.has(clave)) {
           vistos.add(clave);
@@ -429,14 +431,14 @@
     }
 
     function isPending(row) {
-      const estado = clean(getField(row, ['ESTADO','Estado','estado'])).toLocaleUpperCase('es-UY');
-      return estado === 'POR DESCARGAR';
+      const estado = clean(getField(row, ['ESTADO DESCARGA','estado_descarga','ESTADO','Estado','estado'])).toLocaleUpperCase('es-UY');
+      return estado !== 'DESCARGÓ' && estado !== 'DESCARGO' && estado !== 'DESCARGADO';
     }
 
     function sortPending(rows) {
       return [...rows].sort((a, b) => {
-        const aRemito = Number(getField(a, ['REMITO','Remito','remito']));
-        const bRemito = Number(getField(b, ['REMITO','Remito','remito']));
+        const aRemito = Number(getField(a, ['REMITO MONTE','REMITO','Remito','remito']));
+        const bRemito = Number(getField(b, ['REMITO MONTE','REMITO','Remito','remito']));
 
         const aEsNumero = Number.isFinite(aRemito);
         const bEsNumero = Number.isFinite(bRemito);
@@ -445,8 +447,8 @@
         if (aEsNumero) return -1;
         if (bEsNumero) return 1;
 
-        return String(getField(a, ['REMITO','Remito','remito'])).localeCompare(
-          String(getField(b, ['REMITO','Remito','remito'])),
+        return String(getField(a, ['REMITO MONTE','REMITO','Remito','remito'])).localeCompare(
+          String(getField(b, ['REMITO MONTE','REMITO','Remito','remito'])),
           'es',
           { numeric: true }
         );
@@ -476,16 +478,17 @@
       $('info').textContent = 'Listado actualizado';
 
       body.innerHTML = pending.map(row => {
-        const remito = getField(row, ['REMITO','Remito','remito']);
-        const registro = getField(row, ['REGISTRO','Registro','registro']);
-        const origen = getField(row, ['ORIGEN','Origen','origen']);
+        const remito = getField(row, ['REMITO MONTE','REMITO','Remito','remito']);
+        const finCarga = getField(row, ['FIN CARGA','fin_carga']);
+        const predio = getField(row, ['PREDIO','Predio','predio']);
         const producto = getField(row, ['PRODUCTO','Producto','producto']);
-        const matricula = getField(row, ['MATRICULA','Matrícula','MATRÍCULA','Matricula','matricula']);
+        const vehiculo = getField(row, ['VEHÍCULO','VEHICULO','vehiculo']);
         const cantidad = getField(row, ['CANTIDAD','Cantidad','cantidad']);
-        const gpsUbicacion = getField(row, ['GPS.UBICACION','GPS Ubicacion','GPS Ubicación','gps.ubicacion']);
-        const gpsVelocidad = getField(row, ['GPS.VELOCIDAD','GPS Velocidad','gps.velocidad']);
-        const gpsLink = getField(row, ['GPS.LINK UBICACION','GPS Link Ubicacion','GPS Link Ubicación','gps.link ubicacion']);
-        const reporteGps = getField(row, ['REPORTE GPS','Reporte GPS','reporte gps']);
+        const neto = getField(row, ['NETO','Neto','neto','neto_ton']);
+        const ubicacionVelocidad = getField(row, ['UBICACION - VELOCIDAD','UBICACIÓN - VELOCIDAD','ubicacion - velocidad']);
+        const gpsLink = getField(row, ['POSICION','POSICIÓN','posicion']);
+        const reporteGps = getField(row, ['REPORTE GPS HACE','REPORTE GPS','Reporte GPS','reporte gps']);
+        const estadoDescarga = getField(row, ['ESTADO DESCARGA','estado_descarga']);
 
         const mapa = clean(gpsLink)
           ? `<a class="map-link" href="${escapeHtml(gpsLink)}" target="_blank" rel="noopener">Ver mapa</a>`
@@ -493,16 +496,16 @@
 
         return `<tr>
           <td>${escapeHtml(remito || '—')}</td>
-          <td>${escapeHtml(formatDate(registro))}</td>
-          <td>${escapeHtml(matricula || '—')}</td>
-          <td>${escapeHtml(origen || '—')}</td>
+          <td>${escapeHtml(formatDate(finCarga))}</td>
+          <td>${escapeHtml(vehiculo || '—')}</td>
+          <td>${escapeHtml(predio || '—')}</td>
           <td>${escapeHtml(producto || '—')}</td>
           <td>${escapeHtml(formatNum(cantidad))}</td>
-          <td>${escapeHtml(gpsUbicacion || '—')}</td>
-          <td>${escapeHtml(gpsVelocidad !== '' ? formatNum(gpsVelocidad) + ' km/h' : '—')}</td>
+          <td>${escapeHtml(formatNum(neto))}</td>
+          <td>${escapeHtml(ubicacionVelocidad || '—')}</td>
           <td>${mapa}</td>
           <td>${escapeHtml(reporteGps || '—')}</td>
-          <td><span class="estado">POR DESCARGAR</span></td>
+          <td><span class="estado">${escapeHtml(estadoDescarga || 'POR DESCARGAR')}</span></td>
         </tr>`;
       }).join('');
 
