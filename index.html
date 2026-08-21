@@ -308,6 +308,24 @@
     function parseDate(value) {
       const text = clean(value);
       if (!text) return null;
+
+      // Admite el formato del JSON: dd/mm/yyyy HH:MM:SS
+      const match = text.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?)?$/);
+
+      if (match) {
+        let year = Number(match[3]);
+        if (year < 100) year += 2000;
+
+        return new Date(
+          year,
+          Number(match[2]) - 1,
+          Number(match[1]),
+          Number(match[4] || 0),
+          Number(match[5] || 0),
+          Number(match[6] || 0)
+        );
+      }
+
       const date = new Date(text);
       return Number.isNaN(date.getTime()) ? null : date;
     }
@@ -414,9 +432,9 @@
       const salida = [];
 
       for (const row of rows) {
-        const remito = clean(getField(row, ['REMITO MONTE','REMITO','Remito','remito']));
-        const vehiculo = clean(getField(row, ['VEHÍCULO','VEHICULO','vehiculo']));
-        const finCarga = clean(getField(row, ['FIN CARGA','fin_carga']));
+        const remito = clean(getField(row, ['numero_1']));
+        const vehiculo = clean(getField(row, ['vehiculo']));
+        const finCarga = clean(getField(row, ['fin_carga']));
 
         const clave = `${remito}|${vehiculo}|${finCarga}`;
 
@@ -430,19 +448,19 @@
     }
 
     function isDestinoPolo(row) {
-      const destino = clean(getField(row, ['DESTINO','Destino','destino'])).toLocaleUpperCase('es-UY');
+      const destino = clean(getField(row, ['destino'])).toLocaleUpperCase('es-UY');
       return destino.includes('POLO');
     }
 
     function isPending(row) {
-      const estado = clean(getField(row, ['ESTADO DESCARGA','estado_descarga','ESTADO','Estado','estado'])).toLocaleUpperCase('es-UY');
+      const estado = clean(getField(row, ['estado_descarga'])).toLocaleUpperCase('es-UY');
       return estado !== 'DESCARGÓ' && estado !== 'DESCARGO' && estado !== 'DESCARGADO';
     }
 
     function sortPending(rows) {
       return [...rows].sort((a, b) => {
-        const aRemito = Number(getField(a, ['REMITO MONTE','REMITO','Remito','remito']));
-        const bRemito = Number(getField(b, ['REMITO MONTE','REMITO','Remito','remito']));
+        const aRemito = Number(getField(a, ['numero_1']));
+        const bRemito = Number(getField(b, ['numero_1']));
 
         const aEsNumero = Number.isFinite(aRemito);
         const bEsNumero = Number.isFinite(bRemito);
@@ -451,8 +469,8 @@
         if (aEsNumero) return -1;
         if (bEsNumero) return 1;
 
-        return String(getField(a, ['REMITO MONTE','REMITO','Remito','remito'])).localeCompare(
-          String(getField(b, ['REMITO MONTE','REMITO','Remito','remito'])),
+        return String(getField(a, ['numero_1'])).localeCompare(
+          String(getField(b, ['numero_1'])),
           'es',
           { numeric: true }
         );
@@ -478,11 +496,11 @@
           .replace(/\s+/g, '');
 
       const totalRojo = pending.filter(row =>
-        normalizarProducto(getField(row, ['PRODUCTO','Producto','producto'])) === 'ROJO5.80+30'
+        normalizarProducto(getField(row, ['producto'])) === 'ROJO5.80+30'
       ).length;
 
       const totalAmarillo = pending.filter(row =>
-        normalizarProducto(getField(row, ['PRODUCTO','Producto','producto'])) === 'AMARILLO5.80+30PPL'
+        normalizarProducto(getField(row, ['producto'])) === 'AMARILLO5.80+30PPL'
       ).length;
 
       $('contadorRojo').textContent = new Intl.NumberFormat('es-UY').format(totalRojo);
@@ -490,16 +508,27 @@
       $('info').textContent = 'Listado actualizado';
 
       body.innerHTML = pending.map(row => {
-        const remito = getField(row, ['REMITO MONTE','REMITO','Remito','remito']);
-        const finCarga = getField(row, ['FIN CARGA','fin_carga']);
-        const predio = getField(row, ['PREDIO','Predio','predio']);
-        const producto = getField(row, ['PRODUCTO','Producto','producto']);
-        const vehiculo = getField(row, ['VEHÍCULO','VEHICULO','vehiculo']);
-        const cantidad = getField(row, ['CANTIDAD','Cantidad','cantidad']);
-        const ubicacionVelocidad = getField(row, ['UBICACION - VELOCIDAD','UBICACIÓN - VELOCIDAD','ubicacion - velocidad']);
-        const gpsLink = getField(row, ['POSICION','POSICIÓN','posicion']);
-        const reporteGps = getField(row, ['REPORTE GPS HACE','REPORTE GPS','Reporte GPS','reporte gps']);
-        const estadoDescarga = getField(row, ['ESTADO DESCARGA','estado_descarga']);
+        const remito = getField(row, ['numero_1']);
+        const finCarga = getField(row, ['fin_carga']);
+        const predio = getField(row, ['predio']);
+        const producto = getField(row, ['producto']);
+        const vehiculo = getField(row, ['vehiculo']);
+        const cantidad = getField(row, ['cantidad']);
+        const geocerca = clean(getField(row, ['geocerca']));
+        const velocidad = getField(row, ['velocidad']);
+        const gpsLink = getField(row, ['position_link']);
+        const reporteGps = getField(row, ['reporte_gps_hace']);
+        const estadoDescarga = getField(row, ['estado_descarga']);
+
+        const velocidadNumero = Number(velocidad);
+        const velocidadTexto = Number.isFinite(velocidadNumero)
+          ? `${new Intl.NumberFormat('es-UY', { maximumFractionDigits: 1 }).format(velocidadNumero)} km/h`
+          : '';
+
+        const ubicacionVelocidad = [
+          geocerca && geocerca.toLocaleUpperCase('es-UY') !== 'NA' ? geocerca : '',
+          velocidadTexto
+        ].filter(Boolean).join(' · ') || '—';
 
         const mapa = clean(gpsLink)
           ? `<a class="map-link" href="${escapeHtml(gpsLink)}" target="_blank" rel="noopener">Ver mapa</a>`
