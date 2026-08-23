@@ -157,8 +157,9 @@
       font-size:12px;
     }
     .table-wrap{
-      overflow:auto;
-      max-height:calc(100vh - 200px);
+      overflow-x:auto;
+      overflow-y:visible;
+      max-height:none;
       border:1px solid var(--line);
       border-radius:10px;
     }
@@ -221,7 +222,7 @@
     }
     @media(max-width:650px){
       .wrap{width:min(100% - 22px,1480px);padding-top:18px}
-      .table-wrap{max-height:calc(100vh - 185px)}
+      .table-wrap{max-height:none}
     }
   </style>
 </head>
