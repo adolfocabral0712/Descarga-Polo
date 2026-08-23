@@ -349,6 +349,22 @@
       for (const name of names) {
         if (Object.prototype.hasOwnProperty.call(row, name)) return row[name];
       }
+
+      const normalizarNombreCampo = value => String(value ?? '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLocaleLowerCase('es-UY')
+        .replace(/[^a-z0-9]/g, '');
+
+      const camposNormalizados = new Map(
+        Object.keys(row).map(key => [normalizarNombreCampo(key), key])
+      );
+
+      for (const name of names) {
+        const keyReal = camposNormalizados.get(normalizarNombreCampo(name));
+        if (keyReal !== undefined) return row[keyReal];
+      }
+
       return '';
     }
 
@@ -433,9 +449,9 @@
       const salida = [];
 
       for (const row of rows) {
-        const remito = clean(getField(row, ['numero_1']));
-        const vehiculo = clean(getField(row, ['vehiculo']));
-        const finCarga = clean(getField(row, ['fin_carga']));
+        const remito = clean(getField(row, ['numero_1', 'REMITO MONTE']));
+        const vehiculo = clean(getField(row, ['vehiculo', 'VEHÍCULO']));
+        const finCarga = clean(getField(row, ['fin_carga', 'FIN CARGA']));
 
         const clave = `${remito}|${vehiculo}|${finCarga}`;
 
@@ -460,8 +476,8 @@
 
     function sortPending(rows) {
       return [...rows].sort((a, b) => {
-        const aRemito = Number(getField(a, ['numero_1']));
-        const bRemito = Number(getField(b, ['numero_1']));
+        const aRemito = Number(getField(a, ['numero_1', 'REMITO MONTE']));
+        const bRemito = Number(getField(b, ['numero_1', 'REMITO MONTE']));
 
         const aEsNumero = Number.isFinite(aRemito);
         const bEsNumero = Number.isFinite(bRemito);
@@ -470,8 +486,8 @@
         if (aEsNumero) return -1;
         if (bEsNumero) return 1;
 
-        return String(getField(a, ['numero_1'])).localeCompare(
-          String(getField(b, ['numero_1'])),
+        return String(getField(a, ['numero_1', 'REMITO MONTE'])).localeCompare(
+          String(getField(b, ['numero_1', 'REMITO MONTE'])),
           'es',
           { numeric: true }
         );
@@ -509,24 +525,25 @@
       $('info').textContent = 'Listado actualizado';
 
       body.innerHTML = pending.map(row => {
-        const remito = getField(row, ['numero_1']);
-        const finCarga = getField(row, ['fin_carga']);
+        const remito = getField(row, ['numero_1', 'REMITO MONTE']);
+        const finCarga = getField(row, ['fin_carga', 'FIN CARGA']);
         const predio = getField(row, ['predio']);
         const producto = getField(row, ['producto']);
-        const vehiculo = getField(row, ['vehiculo']);
+        const vehiculo = getField(row, ['vehiculo', 'VEHÍCULO']);
         const cantidad = getField(row, ['cantidad']);
         const geocerca = clean(getField(row, ['geocerca']));
         const velocidad = getField(row, ['velocidad']);
-        const gpsLink = getField(row, ['position_link']);
-        const reporteGps = getField(row, ['reporte_gps_hace']);
-        const estadoDescarga = getField(row, ['estado_descarga']);
+        const ubicacionVelocidadJson = clean(getField(row, ['UBICACION - VELOCIDAD']));
+        const gpsLink = getField(row, ['position_link', 'REPORTE GPS']);
+        const reporteGps = getField(row, ['reporte_gps_hace', 'REPORTE GPS HACE']);
+        const estadoDescarga = getField(row, ['estado_descarga', 'ESTADO DESCARGA']);
 
         const velocidadNumero = Number(velocidad);
         const velocidadTexto = Number.isFinite(velocidadNumero)
           ? `${new Intl.NumberFormat('es-UY', { maximumFractionDigits: 1 }).format(velocidadNumero)} km/h`
           : '';
 
-        const ubicacionVelocidad = [
+        const ubicacionVelocidad = ubicacionVelocidadJson || [
           geocerca && geocerca.toLocaleUpperCase('es-UY') !== 'NA' ? geocerca : '',
           velocidadTexto
         ].filter(Boolean).join(' · ') || '—';
