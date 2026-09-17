@@ -260,7 +260,7 @@
             <strong id="contadorAmarillo">0</strong>
           </div>
           <div class="product-counter">
-            VERDE 5.80+45
+            VERDE 5.80+45 PPL
             <strong id="contadorVerde">0</strong>
           </div>
         </div>
@@ -517,11 +517,19 @@
           .replace(/,/g, '.')
           .replace(/\s+/g, '');
 
-      const esProductoVerde = value =>
-        normalizarProducto(value) === '00VERDEPPL.E.GRANDIS+455.80(EG)';
+      const esProductoVerde = value => {
+        const producto = normalizarProducto(value);
+
+        return producto === '00VERDEPPLE.GRANDIS+455.80(EG)' ||
+          (
+            producto.startsWith('00VERDEPPL') &&
+            producto.includes('E.GRANDIS') &&
+            producto.includes('+455.80')
+          );
+      };
 
       const mostrarProducto = value =>
-        esProductoVerde(value) ? 'VERDE 5.80+45' : clean(value);
+        esProductoVerde(value) ? 'VERDE 5.80+45 PPL' : clean(value);
 
       const totalRojo = pending.filter(row =>
         normalizarProducto(getField(row, ['producto'])) === 'ROJO5.80+30'
