@@ -259,6 +259,10 @@
             AMARILLO 5.80 +30 PPL
             <strong id="contadorAmarillo">0</strong>
           </div>
+          <div class="product-counter">
+            VERDE 5.80+45
+            <strong id="contadorVerde">0</strong>
+          </div>
         </div>
         <span class="small" id="info">Cargando remitos por descargar...</span>
       </div>
@@ -505,12 +509,19 @@
 
       $('contadorPorDescargar').textContent = new Intl.NumberFormat('es-UY').format(pending.length);
 
-      // Normaliza el producto quitando todos los espacios para que valores como
-      // "ROJO 5.80+30" y "ROJO 5.80 +30" se contabilicen igual.
+      // Normaliza espacios y separadores decimales para reconocer variantes
+      // del mismo nombre de producto.
       const normalizarProducto = value =>
         clean(value)
           .toLocaleUpperCase('es-UY')
+          .replace(/,/g, '.')
           .replace(/\s+/g, '');
+
+      const esProductoVerde = value =>
+        normalizarProducto(value) === '00VERDEPPL.E.GRANDIS+455.80(EG)';
+
+      const mostrarProducto = value =>
+        esProductoVerde(value) ? 'VERDE 5.80+45' : clean(value);
 
       const totalRojo = pending.filter(row =>
         normalizarProducto(getField(row, ['producto'])) === 'ROJO5.80+30'
@@ -520,15 +531,20 @@
         normalizarProducto(getField(row, ['producto'])) === 'AMARILLO5.80+30PPL'
       ).length;
 
+      const totalVerde = pending.filter(row =>
+        esProductoVerde(getField(row, ['producto']))
+      ).length;
+
       $('contadorRojo').textContent = new Intl.NumberFormat('es-UY').format(totalRojo);
       $('contadorAmarillo').textContent = new Intl.NumberFormat('es-UY').format(totalAmarillo);
+      $('contadorVerde').textContent = new Intl.NumberFormat('es-UY').format(totalVerde);
       $('info').textContent = 'Listado actualizado';
 
       body.innerHTML = pending.map(row => {
         const remito = getField(row, ['numero_1', 'REMITO MONTE']);
         const finCarga = getField(row, ['fin_carga', 'FIN CARGA']);
         const predio = getField(row, ['predio']);
-        const producto = getField(row, ['producto']);
+        const producto = mostrarProducto(getField(row, ['producto']));
         const vehiculo = getField(row, ['vehiculo', 'VEHÍCULO']);
         const cantidad = getField(row, ['cantidad']);
         const geocerca = clean(getField(row, ['geocerca']));
@@ -593,6 +609,7 @@
         $('contadorPorDescargar').textContent = '—';
         $('contadorRojo').textContent = '0';
         $('contadorAmarillo').textContent = '0';
+        $('contadorVerde').textContent = '0';
         $('info').textContent = 'No fue posible cargar los datos desde Dropbox.';
         $('tableBody').innerHTML = '';
         $('empty').hidden = false;
